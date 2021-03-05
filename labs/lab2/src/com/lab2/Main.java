@@ -2,12 +2,12 @@ package com.lab2;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 
-public class Main extends JPanel  {
-    private static int maxWidth;
-    private static int maxHeight;
+public class Main extends JPanel implements ActionListener {
     private static int MAX_WIDTH = 1000;
     private static int MAX_HEIGHT = 700;
 
@@ -31,6 +31,21 @@ public class Main extends JPanel  {
     private static Color PRIMITIVE_COLOR = Color.GREEN;
     private static Color PRIMITIVE_LINE_COLOR = Color.MAGENTA;
 
+    Timer timer;
+    private double scale = 1;
+    private double minScale = 0.5;
+    private double maxScale = 1.5;
+    private double dScale = 0.01;
+
+    private double alpha = 1;
+    private double minAlpha = 0.1;
+    private double maxAlpha = 1;
+    private double dAlpha = 0.05;
+
+    public Main() {
+        timer = new Timer(10, this);
+        timer.start();
+    }
 
     public void paint(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
@@ -40,12 +55,15 @@ public class Main extends JPanel  {
         g2d.setBackground(BACKGROUND_COLOR);
         g2d.clearRect(0, 0, MAX_WIDTH, MAX_HEIGHT);
 
+        attachAnimationContainer(g2d);
+        g2d.scale(scale, scale);
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float)alpha));
+
         attachLeftGuitarPart(g2d);
         attachRightGuitarBackground(g2d);
         attachGuitarCircle(g2d);
         attachLines(g2d);
         attachPrimitiveWithLine(g2d);
-        attachAnimationContainer(g2d);
     }
 
     private void attachLeftGuitarPart(Graphics2D g2d) {
@@ -101,6 +119,7 @@ public class Main extends JPanel  {
 
     private void attachLines(Graphics2D g2d) {
         g2d.setPaint(STRING_COLOR);
+        g2d.setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
         int linesBlockHeight = (LINES_COUNT - 1) * LINE_PADDING;
         int firstLineYPos = (int)(HALF_HEIGHT - linesBlockHeight / 2);
         int firstLineXPos = (int)(MAX_WIDTH / 3.7);
@@ -147,5 +166,19 @@ public class Main extends JPanel  {
         frame.setResizable(false);
         frame.add(new Main());
         frame.setVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (scale > maxScale || scale < minScale) {
+            dScale *= -1;
+        }
+        scale += dScale;
+
+        if (alpha >= maxAlpha || alpha <= minAlpha) {
+            dAlpha *= -1;
+        }
+        alpha += dAlpha;
+        repaint();
     }
 }
