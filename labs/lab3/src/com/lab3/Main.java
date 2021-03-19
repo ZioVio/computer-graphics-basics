@@ -12,8 +12,11 @@ import javafx.util.Duration;
 public class Main extends Application {
     Paint bgColor = Color.rgb(238, 255, 138);
 
-    int WIDTH = 800;
-    int HEIGHT = 600;
+    int WIDTH = 900;
+    int HEIGHT = 700;
+    int ANIMATION_TRANSLATION_DURATION = 200;
+    int ANIMATION_SCALE_DURATION = 400;
+    int ANIMATION_ROTATE_DURATION = 300;
 
     Group root;
     Scene scene;
@@ -35,70 +38,52 @@ public class Main extends Application {
         root.getChildren().addAll(Drum.getLeftStick());
         root.getChildren().addAll(Drum.getForegroundBodySkeleton());
 
-//        // Big mushroom
-//        root.getChildren().add(BigMushroom.getLowerPartOfStipe());
-//        root.getChildren().add(BigMushroom.getUpperPartOfStipe());
-//        root.getChildren().add(BigMushroom.getCap());
-//        root.getChildren().addAll(BigMushroom.getCapStains());
-//
-//
-//        // Small mushroom
-//        root.getChildren().add(SmallMushroom.getStipe());
-//        root.getChildren().add(SmallMushroom.getCap());
-//        root.getChildren().addAll(SmallMushroom.getCapStains());
-//
-//        // Animation
-//        int duration = 3000;
-//
-//        ScaleTransition scaleFrom = new ScaleTransition(Duration.millis(duration), root);
-//        scaleFrom.setToX(1);
-//        scaleFrom.setToY(1);
-//
-//        ScaleTransition scaleTo = new ScaleTransition(Duration.millis(duration), root);
-//        scaleTo.setToX(0.1);
-//        scaleTo.setToY(0.1);
-//
-//        RotateTransition rotate = new RotateTransition(Duration.millis(duration), root);
-//        rotate.setByAngle(360f);
-//        rotate.setCycleCount(Timeline.INDEFINITE);
-//
-//        TranslateTransition translateTo = new TranslateTransition(Duration.millis(duration * 2), root);
-//        translateTo.setFromX(0);
-//        translateTo.setToX(300);
-//        translateTo.setCycleCount(Timeline.INDEFINITE);
-//        translateTo.setAutoReverse(true);
-//
-//        TranslateTransition translateFrom = new TranslateTransition(Duration.millis(duration * 2), root);
-//        translateFrom.setFromX(300);
-//        translateFrom.setToX(0);
-//        translateFrom.setCycleCount(Timeline.INDEFINITE);
-//        translateFrom.setAutoReverse(true);
-//
-//        SequentialTransition scale = new SequentialTransition();
-//        scale.getChildren().addAll(
-//                scaleTo,
-//                scaleFrom
-//        );
-//        scale.setCycleCount(Timeline.INDEFINITE);
-//
-//        SequentialTransition translate = new SequentialTransition();
-//        translate.getChildren().addAll(
-//                translateTo,
-//                translateFrom
-//        );
-//        translate.setCycleCount(Timeline.INDEFINITE);
-//
-//        ParallelTransition animations = new ParallelTransition();
-//        animations.getChildren().addAll(
-//                scale,
-//                rotate,
-//                translate
-//        );
-//        animations.play();
-//        // End of animation
-//
-//
-        primaryStage.setTitle("Dron drum");
+        TranslateTransition translateTo = new TranslateTransition(Duration.millis(ANIMATION_TRANSLATION_DURATION), root);
+        translateTo.setFromY(-100);
+        translateTo.setToY(100);
+        translateTo.setAutoReverse(true);
+
+        TranslateTransition translateFrom = new TranslateTransition(Duration.millis(ANIMATION_TRANSLATION_DURATION), root);
+        translateFrom.setFromY(100);
+        translateFrom.setToY(-100);
+        translateFrom.setAutoReverse(true);
+
+        ScaleTransition scaleFrom = new ScaleTransition(Duration.millis(ANIMATION_SCALE_DURATION), root);
+        scaleFrom.setToX(1);
+        scaleFrom.setToY(1);
+
+        ScaleTransition scaleTo = new ScaleTransition(Duration.millis(ANIMATION_SCALE_DURATION), root);
+        scaleTo.setToY(0.6);
+        scaleTo.setToX(0.8);
+
+        RotateTransition rotate = new RotateTransition(Duration.millis(ANIMATION_ROTATE_DURATION), root);
+        rotate.setByAngle(360f);
+        rotate.setCycleCount(1);
+
+        SequentialTransition scale = new SequentialTransition();
+        scale.getChildren().addAll(
+                scaleTo,
+                scaleFrom
+        );
+        scale.setCycleCount(1);
+
+        SequentialTransition translate = new SequentialTransition();
+        translate.getChildren().addAll(
+                translateTo,
+                translateFrom
+        );
+        translate.setCycleCount(2);
+
+        SequentialTransition animations = new SequentialTransition();
+        animations.getChildren().addAll(
+                scale,
+                rotate,
+                translate
+        );
+        animations.setCycleCount(Timeline.INDEFINITE);
+        animations.play();
+
+        primaryStage.setTitle("Коваль Андрій КП-83 Лаб3");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
