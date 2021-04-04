@@ -12,3 +12,7 @@
 
 ![lab2](labs/lab2/img1.jpg)
 ![lab2](labs/lab2/img2.jpg)
+
+### Лабораторна робота 4
+
+![lab4](labs/lab4/snowman.gif)
