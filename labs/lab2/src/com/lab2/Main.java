@@ -16,7 +16,7 @@ public class Main extends JPanel implements ActionListener {
     private static double PADDING = 40;
     private static double HOLE_RADIUS = PADDING * 3.7;
 
-    private static int LINES_COUNT = 9;
+    private static int LINES_COUNT = 3;
     private static int LINES_BLOCK_PADDING_FROM_CIRCLE = (int)(PADDING / 5);
     private static int LINE_PADDING = (int)((HOLE_RADIUS - LINES_BLOCK_PADDING_FROM_CIRCLE  * 2) / (LINES_COUNT - 1));
     private static int LINE_LENGTH = (int)(MAX_WIDTH / 1.65);
