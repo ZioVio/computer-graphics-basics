@@ -4,6 +4,8 @@ import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.loaders.objectfile.ObjectFile;
 import com.sun.j3d.utils.image.TextureLoader;
 import com.sun.j3d.utils.universe.SimpleUniverse;
+import com.sun.j3d.utils.universe.ViewingPlatform;
+import jdk.jfr.TransitionTo;
 
 import javax.media.j3d.*;
 import javax.swing.*;
@@ -15,7 +17,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 
 public class Main extends JFrame implements ActionListener, KeyListener {
     private final static String crabLocation = "crab.obj";
@@ -31,55 +35,86 @@ public class Main extends JFrame implements ActionListener, KeyListener {
     private SimpleUniverse universe;
     private Scene scene;
     private Background background;
+    private Timer timer;
 
-    private float currentX = 3;
-    private float currentScale = 1;
+    private int maxCoordinatsCounter = 300;
+
+    private PathInterpolator pathInterpolator = new PathInterpolator(
+            new PathInterpolator.Coordinats3D[] {
+                    new PathInterpolator.Coordinats3D(3f, 0f, 0f, 1f, 30f, 0f, 0f),
+                    new PathInterpolator.Coordinats3D(5f, 0f, 0f, 1f, 0f, 0f, 0f),
+                    new PathInterpolator.Coordinats3D(2f, 1f, 0f, 1f, -30f, 0f, 0f),
+                    new PathInterpolator.Coordinats3D(-1f, 1f, 0f, 1f, 0f, 0f, 0f),
+            }
+            ,
+            maxCoordinatsCounter
+    );
+
+    private PathInterpolator.Coordinats3D[] interpolatedPath = pathInterpolator.getInterpolatedPath();
+    private int coordinatsCounter = 0;
+
+    private float currentX = 3,
+                currentY = 0,
+                currentZ = 0,
+                currentScale = 1,
+                currentRotateX = 0,
+                currentRotateY = 0,
+                currentRotateZ = 0;
 
     public static void main(String[] args) {
         try {
-            var window = new Main();
-            window.addKeyListener(window);
+            Main window = new Main();
             window.setVisible(true);
+
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }
     }
 
     public Main() throws IOException {
-        initialize();
-        addTexture();
-        addImageBackground();
+        init();
+        addBackground();
         addLight();
         setInitialViewAngle();
         setInitialLocation();
+        compile();
+    }
+
+    private void compile() {
         root.compile();
         universe.addBranchGraph(root);
     }
 
     private void setInitialLocation() {
-        transform3D.setTranslation(new Vector3f(currentX, 0, 0));
+        transform3D.setTranslation(new Vector3f(currentX, currentY, currentZ));
         transform3D.setScale(currentScale);
         mainTransformGroup.setTransform(transform3D);
     }
 
-    private void initialize() throws IOException {
-        // window settings
-        setTitle("Lab #5");
-        setSize(1000, 700);
+    private void init() throws IOException {
+        setTitle("Андрій Коваль КП-83 ЛАБ 5");
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         canvas.setDoubleBufferEnable(true);
+        canvas.addKeyListener(this);
         getContentPane().add(canvas, BorderLayout.CENTER);
 
         universe = new SimpleUniverse(canvas);
         universe.getViewingPlatform().setNominalViewingTransform();
 
-        canvas.addKeyListener(this);
         scene = getSceneFromFile();
+
+        mainTransformGroup.addChild(scene.getSceneGroup());
+        mainTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+        root.addChild(mainTransformGroup);
+
+        timer = new Timer(10, this);
+        timer.start();
     }
 
     private void addLight() {
-        var dirLight = new DirectionalLight(
+        DirectionalLight dirLight = new DirectionalLight(
                 new Color3f(Color.WHITE),
                 new Vector3f(4.0f, -7.0f, -12.0f)
         );
@@ -87,12 +122,12 @@ public class Main extends JFrame implements ActionListener, KeyListener {
         dirLight.setInfluencingBounds(new BoundingSphere(new Point3d(), 1000));
         root.addChild(dirLight);
 
-        var ambientLight = new AmbientLight(new Color3f(Color.WHITE));
-        var directionalLight = new DirectionalLight(
+        AmbientLight ambientLight = new AmbientLight(new Color3f(Color.WHITE));
+        DirectionalLight directionalLight = new DirectionalLight(
                 new Color3f(Color.BLACK),
                 new Vector3f(-1F, -1F, -1F)
         );
-        var influenceRegion = new BoundingSphere(new Point3d(), 1000);
+        BoundingSphere influenceRegion = new BoundingSphere(new Point3d(), 1000);
         ambientLight.setInfluencingBounds(influenceRegion);
         directionalLight.setInfluencingBounds(influenceRegion);
         root.addChild(ambientLight);
@@ -100,31 +135,14 @@ public class Main extends JFrame implements ActionListener, KeyListener {
     }
 
     private TextureLoader getTextureLoader(String path) throws IOException {
-        var textureResource = currentClassLoader.getResource(path);
+        URL textureResource = currentClassLoader.getResource(path);
         if (textureResource == null) {
             throw new IOException("Couldn't find texture: " + path);
         }
         return new TextureLoader(textureResource.getPath(), canvas);
     }
 
-    private Material getMaterial() {
-        var material = new Material();
-        material.setAmbientColor(new Color3f(new Color(243, 242, 221)));
-        material.setDiffuseColor(new Color3f(new Color(255, 233, 207)));
-        material.setSpecularColor(new Color3f(new Color(255, 203, 195)));
-        material.setLightingEnable(true);
-        return material;
-    }
-
-    private void addTexture() throws IOException {
-//        nameMap = scene.getNamedObjects();
-        mainTransformGroup.addChild(scene.getSceneGroup());
-        mainTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        root.addChild(mainTransformGroup);
-
-    }
-
-    private void addImageBackground() throws IOException {
+    private void addBackground() throws IOException {
         background = new Background(getTextureLoader(backgroundLocation).getImage());
         background.setImageScaleMode(Background.SCALE_FIT_MAX);
         background.setApplicationBounds(new BoundingSphere(new Point3d(),1000));
@@ -133,11 +151,11 @@ public class Main extends JFrame implements ActionListener, KeyListener {
     }
 
     private void setInitialViewAngle() {
-        var vp = universe.getViewingPlatform();
-        var transform = new Transform3D();
+        ViewingPlatform vp = universe.getViewingPlatform();
+        Transform3D transform = new Transform3D();
         transform.lookAt(
-                new Point3d(-3.985f, -0.07f, 0),
-                new Point3d(-0.7, 0, 0),
+                new Point3d(-4, 0, 0),
+                new Point3d(-1, 0, 0),
                 new Vector3d(0, 1, 0)
         );
         transform.invert();
@@ -147,7 +165,7 @@ public class Main extends JFrame implements ActionListener, KeyListener {
     private Scene getSceneFromFile() throws IOException {
         ObjectFile file = new ObjectFile(ObjectFile.RESIZE);
         file.setFlags(ObjectFile.RESIZE | ObjectFile.TRIANGULATE | ObjectFile.STRIPIFY);
-        var inputStream = currentClassLoader.getResourceAsStream(crabLocation);
+        InputStream inputStream = currentClassLoader.getResourceAsStream(crabLocation);
         if (inputStream == null) {
             throw new IOException("Resource " + crabLocation + " not found");
         }
@@ -156,33 +174,47 @@ public class Main extends JFrame implements ActionListener, KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        int keyCode = e.getKeyCode();
-        float diff = 0.05f;
-
-        switch (keyCode) {
-            case KeyEvent.VK_UP: {
-                transform3D.setTranslation(new Vector3f(currentX, 0, 0));
-                transform3D.setScale(currentScale);
-                mainTransformGroup.setTransform(transform3D);
-                currentX += 0.05;
-                currentScale -= 0.005;
-            } break;
+        float diff = (e.isShiftDown() ? -1 : 1) * 0.05f;
+        switch (e.getKeyCode()) {
             case KeyEvent.VK_X: {
-                rotateTransformX.rotX(diff);
-                transform3D.mul(rotateTransformX);
-                mainTransformGroup.setTransform(transform3D);
+                currentX += diff;
             } break;
             case KeyEvent.VK_Y: {
-                rotateTransformY.rotY(diff);
-                transform3D.mul(rotateTransformY);
-                mainTransformGroup.setTransform(transform3D);
+                currentY += diff;
             } break;
             case KeyEvent.VK_Z: {
+                currentZ += diff;
+            } break;
+            case KeyEvent.VK_S: {
+                currentScale += diff;
+            } break;
+            case KeyEvent.VK_UP: {
+                currentRotateX += diff;
+                rotateTransformX.rotX(diff);
+                transform3D.mul(rotateTransformX);
+            } break;
+            case KeyEvent.VK_DOWN: {
+                currentRotateY += diff;
+                rotateTransformY.rotY(diff);
+                transform3D.mul(rotateTransformY);
+            } break;
+            case KeyEvent.VK_LEFT: {
+                currentRotateZ += diff;
                 rotateTransformZ.rotZ(diff);
                 transform3D.mul(rotateTransformZ);
-                mainTransformGroup.setTransform(transform3D);
             } break;
         }
+
+        String debugMessage = String.format(
+                "\nX: %f, Y: %f, Z: %f, Scale: %f\n" +
+                "RotX: %f, RotY: %f, RotZ: %f",
+                currentX, currentY, currentZ, currentScale, currentRotateX, currentRotateY, currentRotateZ
+        );
+        System.out.println(debugMessage);
+        // todo move to seprate func
+        transform3D.setTranslation(new Vector3f(currentX, currentY, currentZ));
+        transform3D.setScale(currentScale);
+        mainTransformGroup.setTransform(transform3D);
     }
 
     @Override
@@ -193,6 +225,39 @@ public class Main extends JFrame implements ActionListener, KeyListener {
 
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
+        if (coordinatsCounter >= interpolatedPath.length) {
+            coordinatsCounter = 0;
+        }
+        PathInterpolator.Coordinats3D currentCoords = interpolatedPath[coordinatsCounter];
+        PathInterpolator.Coordinats3D prevCoords = coordinatsCounter == 0
+                ? interpolatedPath[interpolatedPath.length - 1]
+                : interpolatedPath[coordinatsCounter - 1];
+        coordinatsCounter += 1;
+//        String debugMessage = String.format(
+//                "\nX: %f, Y: %f, Z: %f, Scale: %f\n" +
+//                        "RotX: %f, RotY: %f, RotZ: %f",
+//                currentCoords.currentX,
+//                currentCoords.currentY,
+//                currentCoords.currentZ,
+//                currentCoords.currentScale,
+//                currentCoords.currentRotateX,
+//                currentCoords.currentRotateY,
+//                currentCoords.currentRotateZ
+//        );
+//        System.out.println(debugMessage);
 
+//        System.out.println(currentCoords.currentRotateX - prevCoords.currentRotateX);
+////        System.out.println(prevCoords.currentRotateX);
+//
+//        rotateTransformX.rotX(currentCoords.currentRotateX - prevCoords.currentRotateX);
+//        transform3D.mul(rotateTransformX);
+//        rotateTransformY.rotY(currentCoords.currentRotateY - prevCoords.currentRotateY);
+//        transform3D.mul(rotateTransformY);
+//        rotateTransformZ.rotZ(currentCoords.currentRotateZ - prevCoords.currentRotateZ);
+//        transform3D.mul(rotateTransformZ);
+//
+//        transform3D.setTranslation(new Vector3f(currentCoords.currentX, currentCoords.currentY, currentCoords.currentZ));
+//        transform3D.setScale(currentCoords.currentScale);
+//        mainTransformGroup.setTransform(transform3D);
     }
 }
