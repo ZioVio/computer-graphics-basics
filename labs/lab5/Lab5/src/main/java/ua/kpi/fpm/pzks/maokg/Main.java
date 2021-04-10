@@ -85,15 +85,6 @@ public class Main extends JFrame implements ActionListener, KeyListener {
         universe.addBranchGraph(root);
     }
 
-    private void setCrabTexture() {
-        Material material = new Material();
-        material.setAmbientColor ( new Color3f( 0.33f, 0.26f, 0.23f ) );
-        material.setDiffuseColor ( new Color3f( 0.50f, 0.11f, 0.00f ) );
-        material.setSpecularColor( new Color3f( 0.95f, 0.73f, 0.00f ) );
-        material.setShininess( 0.3f );
-        material.setLightingEnable(true);
-    }
-
     private void updateLocation(PathInterpolator.Coordinats3D nextCoords, PathInterpolator.Coordinats3D prevCoords) {
         if (prevCoords != null) {
             rotateTransformX.rotX(nextCoords.currentRotateX - prevCoords.currentRotateX);
