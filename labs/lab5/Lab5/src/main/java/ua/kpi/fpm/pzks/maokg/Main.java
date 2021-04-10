@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Objects;
 
 public class Main extends JFrame implements ActionListener, KeyListener {
     private final static String crabLocation = "crab.obj";
@@ -28,7 +29,7 @@ public class Main extends JFrame implements ActionListener, KeyListener {
     private final Canvas3D canvas = new Canvas3D(SimpleUniverse.getPreferredConfiguration());
     private final TransformGroup mainTransformGroup = new TransformGroup();
     private final Transform3D transform3D = new Transform3D();
-    private final Transform3D rotateTransformX = new Transform3D();
+    private Transform3D rotateTransformX = new Transform3D();
     private final Transform3D rotateTransformY = new Transform3D();
     private final Transform3D rotateTransformZ = new Transform3D();
     private final ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
@@ -37,29 +38,28 @@ public class Main extends JFrame implements ActionListener, KeyListener {
     private Background background;
     private Timer timer;
 
-    private int maxCoordinatsCounter = 300;
+    private int maxCoordinatsCounter = 200;
+    private PathInterpolator.Coordinats3D[] path = new PathInterpolator.Coordinats3D[] {
+            new PathInterpolator.Coordinats3D(0f, 0f, 0.3f, 0.2f, 0.5f, -2.05f, 0.2f),
+            new PathInterpolator.Coordinats3D(0f, -0.15f, 0.15f, 0.3f, 0, 3, 0),
+            new PathInterpolator.Coordinats3D(0f, -0.35f, 0.35f, 0.4f, 0, 0, 0),
+            new PathInterpolator.Coordinats3D(0f, -0.9f, -0.2f, 0.5f, 0, 4, 0),
+            new PathInterpolator.Coordinats3D(0f, -0.05f, 0.3f, 3.5f, 0, 0, 5f),
+            new PathInterpolator.Coordinats3D(0f, -0.05f, 0.3f, 0.2f, 0, 1, 0),
+    };
 
-    private PathInterpolator pathInterpolator = new PathInterpolator(
-            new PathInterpolator.Coordinats3D[] {
-                    new PathInterpolator.Coordinats3D(3f, 0f, 0f, 1f, 30f, 0f, 0f),
-                    new PathInterpolator.Coordinats3D(5f, 0f, 0f, 1f, 0f, 0f, 0f),
-                    new PathInterpolator.Coordinats3D(2f, 1f, 0f, 1f, -30f, 0f, 0f),
-                    new PathInterpolator.Coordinats3D(-1f, 1f, 0f, 1f, 0f, 0f, 0f),
-            }
-            ,
-            maxCoordinatsCounter
-    );
+    private PathInterpolator pathInterpolator = new PathInterpolator(path, maxCoordinatsCounter);
 
     private PathInterpolator.Coordinats3D[] interpolatedPath = pathInterpolator.getInterpolatedPath();
     private int coordinatsCounter = 0;
 
-    private float currentX = 3,
-                currentY = 0,
-                currentZ = 0,
-                currentScale = 1,
-                currentRotateX = 0,
-                currentRotateY = 0,
-                currentRotateZ = 0;
+    private float currentX = path[0].currentX,
+                currentY = path[0].currentY,
+                currentZ = path[0].currentZ,
+                currentScale = path[0].currentScale,
+                currentRotateX = path[0].currentRotateX,
+                currentRotateY = path[0].currentRotateY,
+                currentRotateZ = path[0].currentRotateZ;
 
     public static void main(String[] args) {
         try {
@@ -83,6 +83,29 @@ public class Main extends JFrame implements ActionListener, KeyListener {
     private void compile() {
         root.compile();
         universe.addBranchGraph(root);
+    }
+
+    private void setCrabTexture() {
+        Material material = new Material();
+        material.setAmbientColor ( new Color3f( 0.33f, 0.26f, 0.23f ) );
+        material.setDiffuseColor ( new Color3f( 0.50f, 0.11f, 0.00f ) );
+        material.setSpecularColor( new Color3f( 0.95f, 0.73f, 0.00f ) );
+        material.setShininess( 0.3f );
+        material.setLightingEnable(true);
+    }
+
+    private void updateLocation(PathInterpolator.Coordinats3D nextCoords, PathInterpolator.Coordinats3D prevCoords) {
+        if (prevCoords != null) {
+            rotateTransformX.rotX(nextCoords.currentRotateX - prevCoords.currentRotateX);
+            transform3D.mul(rotateTransformX);
+            rotateTransformY.rotY(nextCoords.currentRotateY - prevCoords.currentRotateY);
+            transform3D.mul(rotateTransformY);
+            rotateTransformZ.rotZ(nextCoords.currentRotateZ - prevCoords.currentRotateZ);
+            transform3D.mul(rotateTransformZ);
+        }
+        transform3D.setTranslation(new Vector3f(nextCoords.currentX, nextCoords.currentY, nextCoords.currentZ));
+        transform3D.setScale(nextCoords.currentScale);
+        mainTransformGroup.setTransform(transform3D);
     }
 
     private void setInitialLocation() {
@@ -190,7 +213,7 @@ public class Main extends JFrame implements ActionListener, KeyListener {
             } break;
             case KeyEvent.VK_UP: {
                 currentRotateX += diff;
-                rotateTransformX.rotX(diff);
+                rotateTransformX.rotX(currentRotateX);
                 transform3D.mul(rotateTransformX);
             } break;
             case KeyEvent.VK_DOWN: {
@@ -204,17 +227,15 @@ public class Main extends JFrame implements ActionListener, KeyListener {
                 transform3D.mul(rotateTransformZ);
             } break;
         }
-
         String debugMessage = String.format(
                 "\nX: %f, Y: %f, Z: %f, Scale: %f\n" +
                 "RotX: %f, RotY: %f, RotZ: %f",
                 currentX, currentY, currentZ, currentScale, currentRotateX, currentRotateY, currentRotateZ
         );
         System.out.println(debugMessage);
-        // todo move to seprate func
-        transform3D.setTranslation(new Vector3f(currentX, currentY, currentZ));
-        transform3D.setScale(currentScale);
-        mainTransformGroup.setTransform(transform3D);
+        updateLocation(new PathInterpolator.Coordinats3D(
+                currentX, currentY, currentZ, currentScale, currentRotateX, currentRotateY, currentRotateZ
+        ), null);
     }
 
     @Override
@@ -230,7 +251,7 @@ public class Main extends JFrame implements ActionListener, KeyListener {
         }
         PathInterpolator.Coordinats3D currentCoords = interpolatedPath[coordinatsCounter];
         PathInterpolator.Coordinats3D prevCoords = coordinatsCounter == 0
-                ? interpolatedPath[interpolatedPath.length - 1]
+                ? null
                 : interpolatedPath[coordinatsCounter - 1];
         coordinatsCounter += 1;
 //        String debugMessage = String.format(
@@ -245,19 +266,6 @@ public class Main extends JFrame implements ActionListener, KeyListener {
 //                currentCoords.currentRotateZ
 //        );
 //        System.out.println(debugMessage);
-
-//        System.out.println(currentCoords.currentRotateX - prevCoords.currentRotateX);
-////        System.out.println(prevCoords.currentRotateX);
-//
-//        rotateTransformX.rotX(currentCoords.currentRotateX - prevCoords.currentRotateX);
-//        transform3D.mul(rotateTransformX);
-//        rotateTransformY.rotY(currentCoords.currentRotateY - prevCoords.currentRotateY);
-//        transform3D.mul(rotateTransformY);
-//        rotateTransformZ.rotZ(currentCoords.currentRotateZ - prevCoords.currentRotateZ);
-//        transform3D.mul(rotateTransformZ);
-//
-//        transform3D.setTranslation(new Vector3f(currentCoords.currentX, currentCoords.currentY, currentCoords.currentZ));
-//        transform3D.setScale(currentCoords.currentScale);
-//        mainTransformGroup.setTransform(transform3D);
+        updateLocation(currentCoords, prevCoords);
     }
 }
