@@ -16,3 +16,7 @@
 ### Лабораторна робота 4
 
 ![lab4](labs/lab4/snowman.gif)
+
+### Лабораторна робота 5
+
+![lab5](labs/lab5/Lab5/crab-flex.gif)
