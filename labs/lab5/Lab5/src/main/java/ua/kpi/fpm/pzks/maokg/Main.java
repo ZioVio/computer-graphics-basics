@@ -245,18 +245,6 @@ public class Main extends JFrame implements ActionListener, KeyListener {
                 ? null
                 : interpolatedPath[coordinatsCounter - 1];
         coordinatsCounter += 1;
-//        String debugMessage = String.format(
-//                "\nX: %f, Y: %f, Z: %f, Scale: %f\n" +
-//                        "RotX: %f, RotY: %f, RotZ: %f",
-//                currentCoords.currentX,
-//                currentCoords.currentY,
-//                currentCoords.currentZ,
-//                currentCoords.currentScale,
-//                currentCoords.currentRotateX,
-//                currentCoords.currentRotateY,
-//                currentCoords.currentRotateZ
-//        );
-//        System.out.println(debugMessage);
         updateLocation(currentCoords, prevCoords);
     }
 }
