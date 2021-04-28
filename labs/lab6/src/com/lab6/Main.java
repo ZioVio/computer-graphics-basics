@@ -108,44 +108,44 @@ public class Main extends JFrame {
         combinedStartTransformation.mul(startTransformation);
         TransformGroup initialTransformGroup = new TransformGroup(combinedStartTransformation);
 
-        Transform3D wheel2RotAxis = new Transform3D();
-        wheel2RotAxis.set(new Vector3d(0, -0.095, 0.5));
-        wheel2RotAxis.setRotation(new AxisAngle4d(0, 0, -0.1, Math.PI / 2));
-        TransformGroup tgWheel2 = new TransformGroup();
-        tgWheel2.addChild(ball1.cloneTree());
+        Transform3D ball2RotAxis = new Transform3D();
+        ball2RotAxis.set(new Vector3d(0, -0.095, 0.5));
+        ball2RotAxis.setRotation(new AxisAngle4d(0, 0, -0.1, Math.PI / 2));
+        TransformGroup mainTgBall2 = new TransformGroup();
+        mainTgBall2.addChild(ball1.cloneTree());
 
-        Transform3D wheel1RotAxis = new Transform3D();
-        wheel1RotAxis.set(new Vector3d(0, -0.095, -0.65));
-        wheel1RotAxis.setRotation(new AxisAngle4d(0, 0, -0.1, Math.PI / 2));
-        TransformGroup tgWheel1 = new TransformGroup();
-        tgWheel1.addChild(ball2.cloneTree());
+        Transform3D ball1RotAxis = new Transform3D();
+        ball1RotAxis.set(new Vector3d(0, -0.095, -0.65));
+        ball1RotAxis.setRotation(new AxisAngle4d(0, 0, -0.1, Math.PI / 2));
+        TransformGroup mainTgBall1 = new TransformGroup();
+        mainTgBall1.addChild(ball2.cloneTree());
 
-        Alpha wheelRotAlpha = new Alpha(ANIMATION_NUM_ROTATIONS, Alpha.INCREASING_ENABLE, ANIMATION_START_TIME, 0, ANIMATION_ROTATION_TIME ,0,0,0,0,0);
+        Alpha ballsRotAlpha = new Alpha(ANIMATION_NUM_ROTATIONS, Alpha.INCREASING_ENABLE, ANIMATION_START_TIME, 0, ANIMATION_ROTATION_TIME ,0,0,0,0,0);
 
-        RotationInterpolator ball1Rot = new RotationInterpolator(wheelRotAlpha, tgWheel1, wheel1RotAxis, 0.0f, (float) Math.PI * 2);
+        RotationInterpolator ball1Rot = new RotationInterpolator(ballsRotAlpha, mainTgBall1, ball1RotAxis, 0.0f, (float) Math.PI * 2);
         ball1Rot.setSchedulingBounds(bounds);
-        tgWheel1.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        tgWheel1.addChild(ball1Rot);
+        mainTgBall1.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+        mainTgBall1.addChild(ball1Rot);
 
-        RotationInterpolator ball2Rot = new RotationInterpolator(wheelRotAlpha, tgWheel2, wheel2RotAxis, 0.0f, (float) Math.PI * 2);
+        RotationInterpolator ball2Rot = new RotationInterpolator(ballsRotAlpha, mainTgBall2, ball2RotAxis, 0.0f, (float) Math.PI * 2);
         ball2Rot.setSchedulingBounds(bounds);
-        tgWheel2.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        tgWheel2.addChild(ball2Rot);
+        mainTgBall2.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+        mainTgBall2.addChild(ball2Rot);
 
-        Transform3D tfWheel = new Transform3D();
-        tfWheel.rotY(Math.PI/3);
-        tfWheel.setScale(1.0/4);
+        Transform3D balls3DTransform = new Transform3D();
+        balls3DTransform.rotY(Math.PI/3);
+        balls3DTransform.setScale(1.0/4);
 
-        TransformGroup tgCarWheel2 = new TransformGroup(tfWheel);
-        tgCarWheel2.addChild(tgWheel2);
+        TransformGroup tgBall2 = new TransformGroup(balls3DTransform);
+        tgBall2.addChild(mainTgBall2);
 
-        TransformGroup tgCarWheel1 = new TransformGroup(tfWheel);
-        tgCarWheel1.addChild(tgWheel1);
+        TransformGroup tgBall1 = new TransformGroup(balls3DTransform);
+        tgBall1.addChild(mainTgBall1);
 
         BranchGroup scene = new BranchGroup();
         scene.addChild(mainTransformGroup);;
-        scene.addChild(tgCarWheel2);
-        scene.addChild(tgCarWheel1);
+        scene.addChild(tgBall2);
+        scene.addChild(tgBall1);
 
         TransformGroup translateXGroup = translate(initialTransformGroup, new Vector3f(0.0f,0.0f,0.5f));
         TransformGroup rotateXGroup = rotate(translateXGroup, new Alpha(10,10000));
