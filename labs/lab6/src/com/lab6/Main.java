@@ -8,11 +8,23 @@ import com.sun.j3d.utils.behaviors.vp.*;
 import javax.swing.JFrame;
 import com.sun.j3d.loaders.*;
 import com.sun.j3d.loaders.objectfile.*;
+
+import java.awt.*;
 import java.io.IOException;
 import java.util.Hashtable;
 
 public class Main extends JFrame {
     public Canvas3D canvas;
+    private Color3f BODY_COLOR = new Color3f(Color.RED);
+    private Color3f HAT_COLOR = new Color3f(Color.ORANGE);
+    private Color3f HEAD_COLOR = new Color3f(Color.YELLOW);
+    private Color3f FACE_COLOR = new Color3f(Color.PINK);
+    private Color3f BACKPACK_COLOR = new Color3f(new Color(150, 150, 0));
+    private Color3f BALL_COLOR = new Color3f(new Color(205, 235, 190));
+
+    private int ANIMATION_START_TIME = 1000;
+    private int ANIMATION_NUM_ROTATIONS = 10000;
+    private int ANIMATION_ROTATION_TIME = 3600;
 
     public Main() throws IOException {
         // canvas & universe
@@ -33,7 +45,6 @@ public class Main extends JFrame {
         ob.setSchedulingBounds(new BoundingSphere(new Point3d(0.0,0.0,0.0),Double.MAX_VALUE));
         universe.getViewingPlatform().setViewPlatformBehavior(ob);
 
-        // light
         BranchGroup bgLight = new BranchGroup();
         BoundingSphere bounds = new BoundingSphere(new Point3d(0.0,0.0,0.0), 100.0);
         Color3f lightColour1 = new Color3f(1.0f,1.0f,1.0f);
@@ -68,92 +79,62 @@ public class Main extends JFrame {
         mainTransform3d.setScale(1.0/4);
         TransformGroup mainTransformGroup = new TransformGroup(mainTransform3d);
         Hashtable namedObjects = mainScene.getNamedObjects();
+        Shape3D body = (Shape3D) namedObjects.get("body");
+        setColorToShape(body, BODY_COLOR);
+        Shape3D hat = (Shape3D) namedObjects.get("hat");
+        setColorToShape(hat, HAT_COLOR);
+        Shape3D head = (Shape3D) namedObjects.get("head");
+        setColorToShape(head, HEAD_COLOR);
+        Shape3D faceLeft = (Shape3D) namedObjects.get("face-left");
+        Shape3D faceRight = (Shape3D) namedObjects.get("face-right");
+        setColorToShape(faceLeft, FACE_COLOR);
+        setColorToShape(faceRight, FACE_COLOR);
+        Shape3D backpack = (Shape3D) namedObjects.get("backpack");
+        setColorToShape(backpack, BACKPACK_COLOR);
+        Shape3D ball1 = (Shape3D) namedObjects.get("ball1");
+        Shape3D ball2 = (Shape3D) namedObjects.get("ball2");
 
-        Appearance appearance = new Appearance();
-        setToMyDefaultAppearance(appearance,new Color3f(0.8f,0.1f,0.0f));
-        Shape3D redCar = (Shape3D) namedObjects.get("body");
-        redCar.setAppearance(appearance);
+        setColorToShape(ball1, BALL_COLOR);
+        setColorToShape(ball2, BALL_COLOR);
 
-        Shape3D wheel4 = (Shape3D) namedObjects.get("hat");
-        Shape3D wheel3 = (Shape3D) namedObjects.get("backpack");
-        Shape3D wheel2 = (Shape3D) namedObjects.get("ball1");
-        Shape3D wheel1 = (Shape3D) namedObjects.get("ball2");
+        Shape3D[] fullBody = new Shape3D[] { body, hat, head, faceLeft, faceRight, backpack };
 
-        Shape3D[] car = new Shape3D[] { redCar };
-
-        for (Shape3D shape:car) {
+        for (Shape3D shape:fullBody) {
             mainTransformGroup.addChild(shape.cloneTree());
         }
 
         Transform3D startTransformation = new Transform3D();
         Transform3D combinedStartTransformation = new Transform3D();
         combinedStartTransformation.mul(startTransformation);
-        TransformGroup carStartTransformGroup = new TransformGroup(combinedStartTransformation);
-
-        int timeStart = 1000; // time for animation to start
-        int numRot = 100; // number of rotations
-        int timeRot = 3600;// time of 1 rotation
-
-        Transform3D wheel4RotAxis = new Transform3D();
-        wheel4RotAxis.set(new Vector3d(0, -0.101, 0.55));
-        wheel4RotAxis.setRotation(new AxisAngle4d(0, 0, 0, 0));
-        TransformGroup tgWheel4 = new TransformGroup();
-        tgWheel4.addChild(wheel4.cloneTree());
-
-        Transform3D wheel3RotAxis = new Transform3D();
-        wheel3RotAxis.set(new Vector3d(0, -0.101, -0.6));
-        wheel3RotAxis.setRotation(new AxisAngle4d(0, 0, -0.1, Math.PI / 2));
-        TransformGroup tgWheel3 = new TransformGroup();
-        tgWheel3.addChild(wheel3.cloneTree());
+        TransformGroup initialTransformGroup = new TransformGroup(combinedStartTransformation);
 
         Transform3D wheel2RotAxis = new Transform3D();
         wheel2RotAxis.set(new Vector3d(0, -0.095, 0.5));
         wheel2RotAxis.setRotation(new AxisAngle4d(0, 0, -0.1, Math.PI / 2));
         TransformGroup tgWheel2 = new TransformGroup();
-        tgWheel2.addChild(wheel2.cloneTree());
+        tgWheel2.addChild(ball1.cloneTree());
 
         Transform3D wheel1RotAxis = new Transform3D();
         wheel1RotAxis.set(new Vector3d(0, -0.095, -0.65));
         wheel1RotAxis.setRotation(new AxisAngle4d(0, 0, -0.1, Math.PI / 2));
         TransformGroup tgWheel1 = new TransformGroup();
-        tgWheel1.addChild(wheel1.cloneTree());
+        tgWheel1.addChild(ball2.cloneTree());
 
-        Alpha wheelRotAlpha = new Alpha(numRot, Alpha.INCREASING_ENABLE, timeStart, 0, timeRot ,0,0,0,0,0);
+        Alpha wheelRotAlpha = new Alpha(ANIMATION_NUM_ROTATIONS, Alpha.INCREASING_ENABLE, ANIMATION_START_TIME, 0, ANIMATION_ROTATION_TIME ,0,0,0,0,0);
 
-//         wheel4
-        RotationInterpolator wheel4Rot = new RotationInterpolator(wheelRotAlpha, tgWheel4, wheel4RotAxis, 0.0f, (float) Math.PI * 2);
-        wheel4Rot.setSchedulingBounds(bounds);
-        tgWheel4.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        tgWheel4.addChild(wheel4Rot);
-
-//         wheel3
-        RotationInterpolator wheel3Rot = new RotationInterpolator(wheelRotAlpha, tgWheel3, wheel3RotAxis, 0.0f, (float) Math.PI * 2);
-        wheel3Rot.setSchedulingBounds(bounds);
-        tgWheel3.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        tgWheel3.addChild(wheel3Rot);
-
-        // wheel2
-        RotationInterpolator wheel2Rot = new RotationInterpolator(wheelRotAlpha, tgWheel2, wheel2RotAxis, 0.0f, (float) Math.PI * 2);
-        wheel2Rot.setSchedulingBounds(bounds);
-        tgWheel2.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        tgWheel2.addChild(wheel2Rot);
-
-        // wheel1
-        RotationInterpolator wheel1Rot = new RotationInterpolator(wheelRotAlpha, tgWheel1, wheel1RotAxis, 0.0f, (float) Math.PI * 2);
-        wheel1Rot.setSchedulingBounds(bounds);
+        RotationInterpolator ball1Rot = new RotationInterpolator(wheelRotAlpha, tgWheel1, wheel1RotAxis, 0.0f, (float) Math.PI * 2);
+        ball1Rot.setSchedulingBounds(bounds);
         tgWheel1.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        tgWheel1.addChild(wheel1Rot);
-        // end of animation
+        tgWheel1.addChild(ball1Rot);
+
+        RotationInterpolator ball2Rot = new RotationInterpolator(wheelRotAlpha, tgWheel2, wheel2RotAxis, 0.0f, (float) Math.PI * 2);
+        ball2Rot.setSchedulingBounds(bounds);
+        tgWheel2.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+        tgWheel2.addChild(ball2Rot);
 
         Transform3D tfWheel = new Transform3D();
         tfWheel.rotY(Math.PI/3);
         tfWheel.setScale(1.0/4);
-
-        TransformGroup tgCarWheel4 = new TransformGroup(tfWheel);
-//        tgCarWheel4.addChild(tgWheel4);
-
-        TransformGroup tgCarWheel3 = new TransformGroup(tfWheel);
-        tgCarWheel3.addChild(tgWheel3);
 
         TransformGroup tgCarWheel2 = new TransformGroup(tfWheel);
         tgCarWheel2.addChild(tgWheel2);
@@ -161,31 +142,36 @@ public class Main extends JFrame {
         TransformGroup tgCarWheel1 = new TransformGroup(tfWheel);
         tgCarWheel1.addChild(tgWheel1);
 
-        BranchGroup theScene = new BranchGroup();
-        theScene.addChild(mainTransformGroup);
-        theScene.addChild(tgCarWheel4);
-        theScene.addChild(tgCarWheel3);
-        theScene.addChild(tgCarWheel2);
-        theScene.addChild(tgCarWheel1);
+        BranchGroup scene = new BranchGroup();
+        scene.addChild(mainTransformGroup);;
+        scene.addChild(tgCarWheel2);
+        scene.addChild(tgCarWheel1);
 
-        TransformGroup whiteTransXformGroup = translate(carStartTransformGroup, new Vector3f(0.0f,0.0f,0.5f));
-        TransformGroup whiteRotXformGroup = rotate(whiteTransXformGroup, new Alpha(10,5000));
-        mainBranchGroup.addChild(whiteRotXformGroup);
-        carStartTransformGroup.addChild(theScene);
+        TransformGroup translateXGroup = translate(initialTransformGroup, new Vector3f(0.0f,0.0f,0.5f));
+        TransformGroup rotateXGroup = rotate(translateXGroup, new Alpha(10,10000));
+        mainBranchGroup.addChild(rotateXGroup);
+        initialTransformGroup.addChild(scene);
 
-        // add background
-        background.setImageScaleMode(Background.SCALE_FIT_MAX);
-        background.setApplicationBounds(bounds);
-        background.setCapability(Background.ALLOW_IMAGE_WRITE);
-        theScene.addChild(background);
+
+        addBackground(bounds, background, scene);
 
         mainBranchGroup.compile();
         universe.addBranchGraph(mainBranchGroup);
     }
 
-    public static void setToMyDefaultAppearance(Appearance app, Color3f col) {
-        app.setMaterial(new Material(col,col,col,col,150.0f));
+    private void addBackground(BoundingSphere bounds, Background background, BranchGroup scene) {
+        background.setImageScaleMode(Background.SCALE_FIT_MAX);
+        background.setApplicationBounds(bounds);
+        background.setCapability(Background.ALLOW_IMAGE_WRITE);
+        scene.addChild(background);
     }
+
+    public static void setColorToShape(Shape3D shape, Color3f color) {
+        Appearance appearance = new Appearance();
+        appearance.setMaterial(new Material(color, color, color, color, 150.0f));
+        shape.setAppearance(appearance);
+    }
+
 
     private TransformGroup translate(Node node, Vector3f vector) {
         Transform3D transform3D = new Transform3D();
@@ -197,12 +183,12 @@ public class Main extends JFrame {
     }
 
     private TransformGroup rotate(Node node, Alpha alpha) {
-        TransformGroup xformGroup = new TransformGroup();
-        xformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        RotationInterpolator interpolator = new RotationInterpolator(alpha, xformGroup);
+        TransformGroup transformGroup = new TransformGroup();
+        transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+        RotationInterpolator interpolator = new RotationInterpolator(alpha, transformGroup);
         interpolator.setSchedulingBounds(new BoundingSphere(new Point3d(0.0,0.0,0.0),1.0));
-        xformGroup.addChild(interpolator);
-        xformGroup.addChild(node);
-        return xformGroup;
+        transformGroup.addChild(interpolator);
+        transformGroup.addChild(node);
+        return transformGroup;
     }
 }
