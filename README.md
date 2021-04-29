@@ -20,3 +20,8 @@
 ### Лабораторна робота 5
 
 ![lab5](labs/lab5/Lab5/crab-flex.gif)
+
+### Лабораторна робота 6
+
+![lab5](labs/lab6/pockemon-trainer-flex.gif)
+
